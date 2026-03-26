@@ -31,9 +31,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	height: fit-content;
+	max-height: calc(100vh - 130px);
 	position: sticky;
 	top: 90px;
+	overflow-y: auto;
 }
 
 .profile-main {
