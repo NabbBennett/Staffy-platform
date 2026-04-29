@@ -1,0 +1,107 @@
+<div class="opportunity-detail-container" *ngIf="opportunity() as opp">
+  <!-- Header Section -->
+  <div class="opportunity-header">
+    <div class="header-image" *ngIf="getImageUrl(opp.image)">
+      <img [src]="getImageUrl(opp.image)" [alt]="opp.title" />
+    </div>
+
+    <div class="header-content">
+      <div class="organization-info">
+        <div class="organization-link">
+          <img *ngIf="opp.organization_logo" [src]="getImageUrl(opp.organization_logo)" [alt]="opp.organization" class="org-logo" />
+          <span class="org-name">{{ opp.organization }}</span>
+        </div>
+        <span *ngIf="opp.verified" class="verified-badge">✓ Verificada</span>
+      </div>
+
+      <h1 class="opportunity-title">{{ opp.title }}</h1>
+
+      <div class="opportunity-meta">
+        <span class="category-badge">{{ opp.category }}</span>
+        <div class="meta-item">
+          <i class="fa-solid fa-calendar"></i>
+          <span>{{ opp.date }}</span>
+        </div>
+        <div class="meta-item" *ngIf="opp.location">
+          <i class="fa-solid fa-location-dot"></i>
+          <span>{{ opp.location }}</span>
+        </div>
+        <div class="meta-item">
+          <i class="fa-solid fa-clock"></i>
+          <span>{{ opp.timeAndDuration }}</span>
+        </div>
+      </div>
+
+      <div class="availability-section">
+        <div class="spots-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width]="progressWidth()"></div>
+          </div>
+          <span class="spots-text">{{ opp.registered }}/{{ opp.totalSpots }} voluntarios registrados</span>
+        </div>
+
+        <a
+          class="apply-button"
+          [class.disabled]="opp.registered >= opp.totalSpots"
+          [routerLink]="['/opportunities', opp.id, 'apply']"
+        >
+          <i class="fa-solid fa-paper-plane"></i>
+          {{ opp.registered >= opp.totalSpots ? 'Lleno' : 'Aplicar Ahora' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="opportunity-content">
+    <!-- About Section -->
+    <section class="content-section">
+      <h2>Acerca de esta oportunidad</h2>
+      <p class="about-text">{{ opp.about }}</p>
+    </section>
+
+    <!-- Responsibilities Section -->
+    <section class="content-section" *ngIf="opp.responsibilities && opp.responsibilities.length > 0">
+      <h2>Responsabilidades</h2>
+      <ul class="responsibilities-list">
+        <li *ngFor="let responsibility of opp.responsibilities">
+          <i class="fa-solid fa-check-circle"></i>
+          {{ responsibility }}
+        </li>
+      </ul>
+    </section>
+
+    <!-- Requirements Section -->
+    <section class="content-section" *ngIf="opp.requirements && opp.requirements.length > 0">
+      <h2>Requisitos</h2>
+      <ul class="requirements-list">
+        <li *ngFor="let requirement of opp.requirements">
+          <i class="fa-solid fa-star"></i>
+          {{ requirement }}
+        </li>
+      </ul>
+    </section>
+
+    <!-- Tags Section -->
+    <section class="content-section" *ngIf="opp.tags && opp.tags.length > 0">
+      <h2>Etiquetas</h2>
+      <div class="tags-container">
+        <span *ngFor="let tag of opp.tags" class="tag">{{ tag }}</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading()" class="loading-state">
+  <div class="spinner"></div>
+  <p>Cargando oportunidad...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error()" class="error-state">
+  <i class="fa-solid fa-exclamation-triangle"></i>
+  <h2>Error</h2>
+  <p>{{ error() }}</p>
+  <button (click)="ngOnInit()" class="retry-button">Reintentar</button>
+</div>

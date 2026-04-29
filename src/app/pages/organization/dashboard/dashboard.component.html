@@ -1,0 +1,78 @@
+<main class="dashboard-page">
+	<div class="dashboard-container">
+		<header class="page-header">
+			<div>
+				<h1>Bienvenido de vuelta, {{ dashboardStats()?.total_volunteers ? 'Organización' : 'Panel de Control' }}</h1>
+				<p>Aquí está lo que está pasando con tu organización hoy</p>
+			</div>
+
+			<button type="button" class="post-btn" (click)="openCreateOpportunityModal()">+ Publicar oportunidad</button>
+		</header>
+
+		<section class="stats-grid">
+			<article class="stat-card" *ngFor="let stat of stats()" [attr.data-tone]="stat.tone">
+				<div class="stat-top">
+					<span class="trend">{{ stat.trend }}</span>
+				</div>
+				<strong>{{ stat.value }}</strong>
+				<span>{{ stat.label }}</span>
+			</article>
+		</section>
+
+		<section class="content-grid">
+			<article class="panel">
+				<div class="panel-header">
+					<h2>Próximas Oportunidades</h2>
+					<button type="button" class="link-btn" (click)="openOpportunitiesModal()">Ver Todas</button>
+				</div>
+
+				<div class="opportunity-item" *ngFor="let opportunity of visibleUpcomingOpportunities">
+					<div>
+						<h3>{{ opportunity.title }}</h3>
+						<p>{{ opportunity.date }}</p>
+					</div>
+					<div class="opportunity-meta">
+						<span class="status" [class.full]="opportunity.status === 'Full'">{{ opportunity.status }}</span>
+						<small>{{ opportunity.progress }}</small>
+					</div>
+				</div>
+			</article>
+
+			<article class="panel">
+				<div class="panel-header">
+					<h2>Aplicaciones Recientes</h2>
+					<button type="button" class="link-btn" (click)="openApplicationsModal()">Ver Todas</button>
+				</div>
+
+				<div class="application-item" *ngFor="let application of visibleRecentApplications">
+					<div class="avatar">{{ application.name.charAt(0) }}</div>
+					<div class="application-content">
+						<h3>{{ application.name }}</h3>
+						<p>{{ application.opportunity }}</p>
+						<small>{{ application.time }}</small>
+					</div>
+					<span class="application-status" [ngClass]="getStatusClass(application.status)">
+						{{ formatStatus(application.status) }}
+					</span>
+				</div>
+			</article>
+		</section>
+	</div>
+
+	<app-opportunities-modal
+		*ngIf="isOpportunitiesModalOpen()"
+		[opportunities]="allOpportunities()"
+		[itemsPerPage]="10"
+		(closed)="closeOpportunitiesModal()"
+		(opportunityDeleted)="onOpportunityDeleted($event)"
+	></app-opportunities-modal>
+
+
+	<app-applications-modal
+		*ngIf="isApplicationsModalOpen()"
+		[applications]="organizationApplications()"
+		[itemsPerPage]="5"
+		(closed)="closeApplicationsModal()"
+		(action)="onApplicationAction($event)"
+	></app-applications-modal>
+</main>

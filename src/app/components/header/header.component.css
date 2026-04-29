@@ -34,6 +34,21 @@
   display: none;
 }
 
+.logo-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin-caption {
+  display: block;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* Desktop Navigation */
 .nav-desktop {
   display: flex;
@@ -58,6 +73,15 @@
 
 .nav-desktop a.active {
   color: #8b5cf6;
+}
+
+.admin-mode .nav-desktop a {
+  color: #cbd5e1;
+}
+
+.admin-mode .nav-desktop a:hover,
+.admin-mode .nav-desktop a.active {
+  color: #ffffff;
 }
 
 /* Header Actions */
@@ -87,6 +111,14 @@
 
 .action-btn:hover {
   color: #8b5cf6;
+}
+
+.admin-mode .action-btn {
+  color: #cbd5e1;
+}
+
+.admin-mode .action-btn:hover {
+  color: #ffffff;
 }
 
 .action-text {
@@ -133,6 +165,10 @@
   transition: all 0.3s;
 }
 
+.admin-mode .menu-toggle span {
+  background-color: #ffffff;
+}
+
 /* Side Menu Overlay */
 .side-menu-overlay {
   position: fixed;
@@ -169,6 +205,29 @@
   transform: translateX(100%);
   transition: transform 0.3s ease-in-out;
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.admin-side-menu {
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  color: white;
+}
+
+.admin-side-menu .side-menu-header,
+.admin-side-menu .side-menu-divider {
+  border-color: rgba(255, 255, 255, 0.12);
+  background-color: transparent;
+}
+
+.admin-side-menu .side-menu-content a,
+.admin-side-menu .side-menu-content button {
+  color: #cbd5e1;
+}
+
+.admin-side-menu .side-menu-content a:hover,
+.admin-side-menu .side-menu-content button:hover,
+.admin-side-menu .side-menu-content a.active {
+  background-color: rgba(139, 92, 246, 0.18);
+  color: #ffffff;
 }
 
 .side-menu.open {

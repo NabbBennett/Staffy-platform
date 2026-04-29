@@ -1,0 +1,185 @@
+<main class="organization-profile-page">
+  <div class="organization-profile-container" *ngIf="!isLoading(); else loadingState">
+    <div class="page-header">
+      <div>
+        <h1>Perfil de la organización</h1>
+        <p>Gestiona la información pública y la configuración de tu organización</p>
+      </div>
+      <button type="button" class="edit-profile-btn" (click)="toggleEditMode()">
+        {{ isEditing() ? 'Cerrar edición' : 'Editar perfil' }}
+      </button>
+    </div>
+
+    <section class="hero-card" *ngIf="!isEditing() && organizationProfile() as profile">
+      <div class="hero-avatar">{{ profile.initials }}</div>
+      <div class="hero-content">
+        <div class="hero-title-row">
+          <h2>{{ profile.name }}</h2>
+          <span class="verified-badge" [class.unverified]="!profile.verified">
+            {{ profile.verified ? 'Organización verificada' : 'Pendiente de verificación' }}
+          </span>
+        </div>
+        <div class="hero-tags">
+          <span class="pill blue">{{ getCategoryLabel(profile.category) }}</span>
+          <span class="pill gray">Est. {{ getEstablishedYear(profile) }}</span>
+        </div>
+        <p>{{ profile.description }}</p>
+      </div>
+    </section>
+
+    <section class="stats-grid" *ngIf="!isEditing() && organizationProfile() as profile">
+      <article class="stat-card" *ngFor="let stat of stats()">
+        <strong>{{ stat.value }}</strong>
+        <span>{{ stat.label }}</span>
+      </article>
+    </section>
+
+    <section class="content-card" *ngIf="!isEditing()">
+      <h3>Misión</h3>
+      <p>{{ organizationProfile()?.description }}</p>
+    </section>
+
+    <section class="content-card contact-card" *ngIf="!isEditing() && organizationProfile() as profile">
+      <h3>Información de contacto</h3>
+      <div class="contact-list">
+        <div class="contact-item">
+          <span class="contact-label">Dirección</span>
+          <span>{{ profile.location }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Correo</span>
+          <span>{{ profile.email }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Teléfono</span>
+          <span>{{ profile.phone }}</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Sitio web</span>
+          <span class="website-link">{{ profile.website }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-card settings-card" *ngIf="!isEditing() && organizationProfile() as profile">
+      <h3>Configuración de la cuenta</h3>
+      <div class="setting-row" *ngFor="let setting of viewSettings(profile)">
+        <div>
+          <strong>{{ setting.title }}</strong>
+          <p>{{ setting.description }}</p>
+        </div>
+        <button
+          type="button"
+          class="toggle-switch"
+          [class.enabled]="getSettingValue(profile, setting.key)"
+          [attr.aria-pressed]="getSettingValue(profile, setting.key)"
+          [attr.aria-label]="setting.title"
+          disabled
+        >
+          <span></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="content-card edit-card" *ngIf="isEditing()">
+      <h3>Editar información</h3>
+
+      <form class="edit-form" (ngSubmit)="saveProfile()">
+        <div class="form-grid">
+          <label>
+            <span>Iniciales</span>
+            <input type="text" name="initials" [(ngModel)]="form.initials" maxlength="12" required />
+          </label>
+
+          <label>
+            <span>Nombre de la organización</span>
+            <input type="text" name="name" [(ngModel)]="form.name" maxlength="160" required />
+          </label>
+
+          <label>
+            <span>Categoría</span>
+            <select name="category" [(ngModel)]="form.category" required>
+              <option *ngFor="let option of categoryOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Dirección</span>
+            <input type="text" name="location" [(ngModel)]="form.location" maxlength="180" required />
+          </label>
+
+          <label>
+            <span>Teléfono</span>
+            <input type="text" name="phone" [(ngModel)]="form.phone" maxlength="60" required />
+          </label>
+
+          <label>
+            <span>Sitio web</span>
+            <input type="text" name="website" [(ngModel)]="form.website" maxlength="255" required />
+          </label>
+
+          <label class="full-width">
+            <span>Misión</span>
+            <textarea name="description" rows="5" [(ngModel)]="form.description" maxlength="4000" required></textarea>
+          </label>
+        </div>
+
+        <div class="settings-editor">
+          <div class="setting-row" [class.editable]="true">
+            <div>
+              <strong>Notificaciones por correo</strong>
+              <p>Recibe avisos sobre aplicaciones y voluntarios</p>
+            </div>
+            <button type="button" class="toggle-switch" [class.enabled]="form.emailNotifications" (click)="toggleSetting('emailNotifications')">
+              <span></span>
+            </button>
+          </div>
+
+          <div class="setting-row" [class.editable]="true">
+            <div>
+              <strong>Perfil público</strong>
+              <p>Haz visible tu organización para los voluntarios</p>
+            </div>
+            <button type="button" class="toggle-switch" [class.enabled]="form.publicProfile" (click)="toggleSetting('publicProfile')">
+              <span></span>
+            </button>
+          </div>
+
+          <div class="setting-row" [class.editable]="true">
+            <div>
+              <strong>Aprobación automática</strong>
+              <p>Aprueba automáticamente las solicitudes de voluntariado</p>
+            </div>
+            <button type="button" class="toggle-switch" [class.enabled]="form.autoApproveApplications" (click)="toggleSetting('autoApproveApplications')">
+              <span></span>
+            </button>
+          </div>
+
+          <div class="setting-row" [class.editable]="true">
+            <div>
+              <strong>Mostrar total de voluntarios</strong>
+              <p>Muestra el conteo de voluntarios en el perfil público</p>
+            </div>
+            <button type="button" class="toggle-switch" [class.enabled]="form.showVolunteerCount" (click)="toggleSetting('showVolunteerCount')">
+              <span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="secondary-btn" (click)="cancelEdit()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" class="primary-btn" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <p class="profile-success" *ngIf="profileSuccess()">{{ profileSuccess() }}</p>
+    <p class="profile-error" *ngIf="profileError()">{{ profileError() }}</p>
+  </div>
+
+  <ng-template #loadingState>
+    <div class="loading-state">Cargando perfil de organización...</div>
+  </ng-template>
+</main>

@@ -1,0 +1,123 @@
+<div class="hero-banner">
+    <div class="opportunities-header">
+      <span class="hero-label">Opportunities</span>
+      <h1>Encuentra tu Siguiente Oportunidad de Voluntariado</h1>
+      <p>Haz la diferencia en tu comunidad. Explora oportunidades que se alineen con tu pasión y disponibilidad.</p>
+    </div>
+
+    <div class="hero-search-box">
+      <input
+        type="text"
+        placeholder="Buscar por título, organización o ubicación..."
+        [(ngModel)]="searchQuery"
+        class="search-input"
+      />
+    </div>
+  </div>
+
+<div class="opportunities-container">
+  <div>
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+      <div class="filter-section">
+        <label for="category-select">Categoría:</label>
+        <select
+          id="category-select"
+          [(ngModel)]="selectedCategory"
+          (change)="onCategoryChange(selectedCategory())"
+          class="category-select"
+        >
+          <option *ngFor="let cat of categories" [value]="cat.value">
+            {{ cat.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="loading-state">
+      <p>Cargando oportunidades...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error()" class="error-state">
+      <p>{{ error() }}</p>
+      <button (click)="loadOpportunities()" class="retry-button">Reintentar</button>
+    </div>
+
+    <!-- Opportunities List -->
+    <div *ngIf="!loading() && !error() && paginatedOpportunities().length > 0" class="opportunities-grid">
+      <div *ngFor="let opp of paginatedOpportunities()" class="opportunity-card">
+        <div class="card-image" *ngIf="getImageUrl(opp.image_url)">
+          <img [src]="getImageUrl(opp.image_url)" [alt]="opp.title" />
+          <div class="card-overlay">
+            <a [routerLink]="['/opportunities', opp.id]" class="view-button">Ver Detalles</a>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="organization-info">
+            <small class="organization-name">{{ opp.organization_name }}</small>
+            <span *ngIf="opp.is_urgent" class="urgent-badge">Urgente</span>
+          </div>
+
+          <h3 class="opportunity-title">{{ opp.title }}</h3>
+
+          <div class="opportunity-meta">
+            <span class="category-badge">{{ opp.category }}</span>
+            <span *ngIf="opp.location" class="location"><i class="fa fa-map-marker"></i> {{ opp.location }}</span>
+          </div>
+
+          <p *ngIf="opp.description" class="opportunity-description">
+            {{ opp.description | slice: 0: 100 }}{{ opp.description && opp.description.length > 100 ? '...' : '' }}
+          </p>
+
+          <div class="card-footer">
+            <div class="spots-info" *ngIf="opp.spots_available">
+              <small>{{ opp.spots_available }} lugares disponibles</small>
+            </div>
+            <a [routerLink]="['/opportunities', opp.id, 'apply']" class="apply-link">Aplicar →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading() && !error() && paginatedOpportunities().length === 0" class="empty-state">
+      <p>No se encontraron oportunidades con los filtros aplicados.</p>
+      <button (click)="searchQuery.set(''); selectedCategory.set('all')" class="reset-button">
+        Limpiar filtros
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading() && !error() && totalPages() > 1" class="pagination">
+      <button
+        [disabled]="currentPage() === 1"
+        (click)="goToPage(currentPage() - 1)"
+        class="pagination-button"
+      >
+        ← Anterior
+      </button>
+
+      <div class="page-numbers">
+        <button
+          *ngFor="let page of pageNumbers()"
+          [class.active]="page === currentPage()"
+          (click)="goToPage(page)"
+          class="page-number"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        [disabled]="currentPage() === totalPages()"
+        (click)="goToPage(currentPage() + 1)"
+        class="pagination-button"
+      >
+        Siguiente →
+      </button>
+    </div>
+  </div>
+</div>

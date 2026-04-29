@@ -1,0 +1,214 @@
+<section class="admin-reports-page">
+	<header class="admin-header">
+		<div class="header-content">
+			<div>
+				<h1>Reportes y Análisis</h1>
+				<p>Visualiza métricas clave y genera reportes de la plataforma.</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- Controls: export -->
+	<div class="report-controls">
+		<div class="controls-right">
+			<button class="btn-export" (click)="exportReport('analytics')">
+				<i class="fa-solid fa-download"></i> <span>Exportar Reporte</span>
+			</button>
+		</div>
+	</div>
+
+	<div *ngIf="loading()" class="loading">
+		<p>Cargando datos analíticos...</p>
+	</div>
+
+	<div *ngIf="error()" class="error-message">
+		<p>{{ error() }}</p>
+		<button type="button" (click)="refreshData()">Reintentar</button>
+	</div>
+
+	<div *ngIf="!loading() && !error()">
+		<!-- Stat Cards -->
+		<section class="stats-grid">
+			<article *ngFor="let card of statCards()" class="stat-card" [ngClass]="card.color">
+				<div class="stat-top">
+					<div class="stat-icon"><i [class]="card.iconClass"></i></div>
+					<div class="stat-meta">
+						<div class="stat-value">{{ card.value }}</div>
+						<div class="stat-label">{{ card.label }}</div>
+					</div>
+					<span *ngIf="card.change !== null && card.change !== undefined" class="stat-badge">+{{ card.change }}%</span>
+				</div>
+			</article>
+		</section>
+
+		<!-- Charts Section -->
+		<section class="charts-grid">
+			<div class="left-col">
+				<div class="chart-card">
+					<div class="card-header"><h4>Crecimiento de la Plataforma</h4></div>
+					<div class="card-body">
+					<ng-container *ngIf="platformSeries().length > 0; else emptyPlatform">
+						<svg viewBox="0 0 500 280" class="line-chart-axis" preserveAspectRatio="xMidYMid meet">
+							<!-- Y-axis labels and grid lines -->
+							<text x="35" y="20" font-size="11" fill="#9ca3af" text-anchor="end">14000</text>
+							<line x1="40" y1="20" x2="460" y2="20" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="65" font-size="11" fill="#9ca3af" text-anchor="end">10500</text>
+							<line x1="40" y1="65" x2="460" y2="65" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="110" font-size="11" fill="#9ca3af" text-anchor="end">7000</text>
+							<line x1="40" y1="110" x2="460" y2="110" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="155" font-size="11" fill="#9ca3af" text-anchor="end">3500</text>
+							<line x1="40" y1="155" x2="460" y2="155" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="200" font-size="11" fill="#9ca3af" text-anchor="end">0</text>
+							
+							<!-- Y-axis -->
+							<line x1="40" y1="10" x2="40" y2="200" stroke="#374151" stroke-width="1" />
+							<!-- X-axis -->
+							<line x1="40" y1="200" x2="460" y2="200" stroke="#374151" stroke-width="1" />
+							
+							<!-- X-axis labels -->
+							<text x="70" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Sep</text>
+							<text x="115" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Oct</text>
+							<text x="160" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Nov</text>
+							<text x="205" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Dec</text>
+							<text x="250" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Jan</text>
+							<text x="295" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Feb</text>
+							<text x="340" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Mar</text>
+							
+							<!-- Data lines -->
+							<ng-container *ngFor="let pts of platformPolylines(); let i = index">
+								<polyline [attr.points]="pts" fill="none" [attr.stroke]="platformSeries()[i].color" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+							</ng-container>
+						</svg>
+						<div class="series-legend">
+							<span *ngFor="let s of platformSeries()" class="legend-item">
+								<span class="dot" [style.background]="s.color"></span> {{ s.name }}
+							</span>
+						</div>
+						</ng-container>
+						<ng-template #emptyPlatform>
+							<div class="empty-state">No hay datos de crecimiento aún</div>
+						</ng-template>
+					</div>
+				</div>
+				
+				<div class="chart-card">
+					<div class="card-header"><h4>Compromiso de Voluntarios</h4></div>
+					<div class="card-body">
+						<ng-container *ngIf="volunteerEngagement().length > 0; else emptyEngagement">
+						<svg viewBox="0 0 500 280" class="bar-chart-axis" preserveAspectRatio="xMidYMid meet">
+							<!-- Y-axis labels and grid lines -->
+							<text x="35" y="20" font-size="11" fill="#9ca3af" text-anchor="end">3600</text>
+							<line x1="40" y1="20" x2="460" y2="20" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="70" font-size="11" fill="#9ca3af" text-anchor="end">2700</text>
+							<line x1="40" y1="70" x2="460" y2="70" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="120" font-size="11" fill="#9ca3af" text-anchor="end">1800</text>
+							<line x1="40" y1="120" x2="460" y2="120" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="170" font-size="11" fill="#9ca3af" text-anchor="end">900</text>
+							<line x1="40" y1="170" x2="460" y2="170" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="200" font-size="11" fill="#9ca3af" text-anchor="end">0</text>
+							
+							<!-- Y-axis -->
+							<line x1="40" y1="10" x2="40" y2="200" stroke="#374151" stroke-width="1" />
+							<!-- X-axis -->
+							<line x1="40" y1="200" x2="460" y2="200" stroke="#374151" stroke-width="1" />
+							
+							<!-- Bars and labels -->
+							<g *ngFor="let b of engagementBars(); let i = index">
+								<rect [attr.x]="b.x - barWidth()/2" [attr.y]="200 - (b.h * 1.8)" [attr.width]="barWidth()" [attr.height]="b.h * 1.8" [attr.fill]="b.color"></rect>
+								<text [attr.x]="b.x" y="220" font-size="10" fill="#6b7280" text-anchor="middle">{{ b.label }}</text>
+							</g>
+							</svg>
+						</ng-container>
+						<ng-template #emptyEngagement>
+							<div class="empty-state">No hay datos de compromiso aún</div>
+						</ng-template>
+					</div>
+				</div>
+			</div>
+			
+			<div class="right-col">
+				<div class="chart-card">
+					<div class="card-header"><h4>Oportunidades por Categoría</h4></div>
+					<div class="card-body small-legend">
+						<div class="pie-grid">
+						<ng-container *ngIf="categoryList().length > 0; else emptyPie">
+							<svg viewBox="0 0 200 200" class="pie-svg" aria-hidden="true">
+								<g transform="translate(100,100)">
+									<ng-container *ngFor="let s of pieSlices(); let i = index">
+										<circle r="70" cx="0" cy="0" fill="transparent" stroke-width="50"
+											[style.stroke]="s.color"
+											[attr.stroke-dasharray]="s.dash"
+											[attr.stroke-dashoffset]="s.offset"
+											transform="rotate(-90)"
+										/>
+									</ng-container>
+								</g>
+							</svg>
+						</ng-container>
+						<ng-template #emptyPie>
+							<div class="empty-state">No hay datos de categorías aún</div>
+						</ng-template>
+						</div>
+						<div class="legend">
+							<div *ngFor="let c of categoryList()" class="legend-item">
+								<span class="color" [style.background]="c.color"></span> {{ c.label }}: {{ c.pct }}%
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="chart-card">
+					<div class="card-header"><h4>Tendencia de Horas de Voluntariado</h4></div>
+					<div class="card-body">
+						<ng-container *ngIf="volunteeringHoursTrend().length > 0; else emptyHours">
+						<svg viewBox="0 0 500 280" class="line-chart-axis" preserveAspectRatio="xMidYMid meet">
+							<!-- Y-axis labels and grid lines -->
+							<text x="35" y="20" font-size="11" fill="#9ca3af" text-anchor="end">60000</text>
+							<line x1="40" y1="20" x2="460" y2="20" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="65" font-size="11" fill="#9ca3af" text-anchor="end">45000</text>
+							<line x1="40" y1="65" x2="460" y2="65" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="110" font-size="11" fill="#9ca3af" text-anchor="end">30000</text>
+							<line x1="40" y1="110" x2="460" y2="110" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="155" font-size="11" fill="#9ca3af" text-anchor="end">15000</text>
+							<line x1="40" y1="155" x2="460" y2="155" stroke="#e5e7eb" stroke-width="0.5" />
+							
+							<text x="35" y="200" font-size="11" fill="#9ca3af" text-anchor="end">0</text>
+							
+							<!-- Y-axis -->
+							<line x1="40" y1="10" x2="40" y2="200" stroke="#374151" stroke-width="1" />
+							<!-- X-axis -->
+							<line x1="40" y1="200" x2="460" y2="200" stroke="#374151" stroke-width="1" />
+							
+							<!-- X-axis labels -->
+							<text x="55" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Sep</text>
+							<text x="105" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Oct</text>
+							<text x="155" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Nov</text>
+							<text x="205" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Dec</text>
+							<text x="255" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Jan</text>
+							<text x="305" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Feb</text>
+							<text x="355" y="220" font-size="11" fill="#6b7280" text-anchor="middle">Mar</text>
+							
+							<!-- Data line -->
+							<polyline [attr.points]="hoursPolyline()" fill="none" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</ng-container>
+						<ng-template #emptyHours>
+							<div class="empty-state">No hay datos de horas aún</div>
+						</ng-template>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</section>

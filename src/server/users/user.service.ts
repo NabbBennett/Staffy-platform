@@ -59,6 +59,80 @@ interface UserBadgeRow extends RowDataPacket {
   created_at: Date;
 }
 
+async function ensureUserStatusOverridesTable(): Promise<void> {
+  const pool = getDbPool();
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_status_overrides (
+      user_id INT UNSIGNED NOT NULL,
+      status ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active',
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
+async function upsertUserStatusOverride(userId: number, status: string): Promise<void> {
+  await ensureUserStatusOverridesTable();
+  const pool = getDbPool();
+  await pool.execute(
+    `INSERT INTO user_status_overrides (user_id, status)
+     VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+    [userId, status],
+  );
+}
+
+async function getUserStatusOverride(userId: number): Promise<'active' | 'inactive' | 'suspended' | null> {
+  await ensureUserStatusOverridesTable();
+  const pool = getDbPool();
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT status FROM user_status_overrides WHERE user_id = ? LIMIT 1`,
+    [userId],
+  );
+  if (rows.length === 0) {
+    return null;
+  }
+  const value = (rows[0] as any).status;
+  if (value === 'active' || value === 'inactive' || value === 'suspended') {
+    return value;
+  }
+  return null;
+}
+
+async function getStatusOverridesMap(userIds: number[]): Promise<Map<number, 'active' | 'inactive' | 'suspended'>> {
+  const map = new Map<number, 'active' | 'inactive' | 'suspended'>();
+  if (userIds.length === 0) {
+    return map;
+  }
+
+  await ensureUserStatusOverridesTable();
+  const pool = getDbPool();
+  const placeholders = userIds.map(() => '?').join(',');
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT user_id, status FROM user_status_overrides WHERE user_id IN (${placeholders})`,
+    userIds,
+  );
+
+  for (const row of rows as any[]) {
+    if (row.status === 'active' || row.status === 'inactive' || row.status === 'suspended') {
+      map.set(Number(row.user_id), row.status);
+    }
+  }
+
+  return map;
+}
+
+function normalizeUserStatus(row: any): 'active' | 'inactive' | 'suspended' {
+  const raw = row?.status;
+  if (raw === 'active' || raw === 'inactive' || raw === 'suspended') {
+    return raw;
+  }
+  if (typeof row?.blocked !== 'undefined') {
+    return Number(row.blocked) === 1 ? 'inactive' : 'active';
+  }
+  return 'active';
+}
+
 export async function findUserIdByEmail(email: string): Promise<number | null> {
   const pool = getDbPool();
   const [rows] = await pool.query<UserRow[]>(
@@ -101,13 +175,25 @@ export async function createUser(
   payload: SignUpPayload & { passwordHash: string; role: UserRole },
 ): Promise<number> {
   const pool = getDbPool();
-  const [result] = await pool.execute<ResultSetHeader>(
-    `INSERT INTO users (full_name, email, password_hash, role)
-     VALUES (?, ?, ?, ?)`,
-    [payload.fullName, payload.email, payload.passwordHash, payload.role],
-  );
-
-  return result.insertId;
+  try {
+    const [result] = await pool.execute<ResultSetHeader>(
+      `INSERT INTO users (full_name, email, password_hash, role, status, blocked)
+       VALUES (?, ?, ?, ?, 'active', 0)`,
+      [payload.fullName, payload.email, payload.passwordHash, payload.role],
+    );
+    return result.insertId;
+  } catch (err: any) {
+    // If DB doesn't have status/blocked columns (legacy schema), fallback to simple insert
+    if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+      const [result] = await pool.execute<ResultSetHeader>(
+        `INSERT INTO users (full_name, email, password_hash, role)
+         VALUES (?, ?, ?, ?)`,
+        [payload.fullName, payload.email, payload.passwordHash, payload.role],
+      );
+      return result.insertId;
+    }
+    throw err;
+  }
 }
 
 export async function findUserProfileByEmail(email: string): Promise<UserProfile | null> {
@@ -244,4 +330,167 @@ export async function findUserBadgesByEmail(email: string): Promise<UserBadge[]>
     status: row.status,
     createdAt: row.created_at,
   }));
+}
+
+export async function findUserById(id: number): Promise<{ id: number; fullName: string; email: string; role: string } | null> {
+  const pool = getDbPool();
+  let rows: RowDataPacket[];
+  try {
+    const [fullRows] = await pool.query<RowDataPacket[]>(
+      `SELECT id, full_name, email, role, status, blocked, created_at FROM users WHERE id = ? LIMIT 1`,
+      [id],
+    );
+    rows = fullRows;
+  } catch (err: any) {
+    if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+      try {
+        const [blockedRows] = await pool.query<RowDataPacket[]>(
+          `SELECT id, full_name, email, role, blocked, created_at FROM users WHERE id = ? LIMIT 1`,
+          [id],
+        );
+        rows = blockedRows;
+      } catch (innerErr: any) {
+        if (innerErr && innerErr.code === 'ER_BAD_FIELD_ERROR') {
+          const [legacyRows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, full_name, email, role, created_at FROM users WHERE id = ? LIMIT 1`,
+            [id],
+          );
+          rows = legacyRows;
+        } else {
+          throw innerErr;
+        }
+      }
+    } else {
+      throw err;
+    }
+  }
+
+  if ((rows as any).length === 0) return null;
+
+  const r: any = (rows as any)[0];
+  const normalizedStatus = normalizeUserStatus(r);
+  const overrideStatus = await getUserStatusOverride(r.id);
+  return {
+    id: r.id,
+    fullName: r.full_name,
+    full_name: r.full_name,
+    email: r.email,
+    role: r.role,
+    status: overrideStatus ?? normalizedStatus,
+    blocked: r.blocked ?? 0,
+    created_at: r.created_at,
+    last_login: null,
+  } as any;
+}
+
+export class UserService {
+  async getAllUsers() {
+    const pool = getDbPool();
+    try {
+      const [rows] = await pool.query<any[]>(
+        `SELECT id, full_name, email, role, status, blocked, created_at FROM users ORDER BY created_at DESC`,
+      );
+      const overrides = await getStatusOverridesMap(rows.map((r) => Number(r.id)));
+      return rows.map((r) => ({
+        ...r,
+        status: overrides.get(Number(r.id)) ?? normalizeUserStatus(r),
+        last_login: r.last_login ?? null,
+      }));
+    } catch (err: any) {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+        try {
+          const [blockedRows] = await pool.query<any[]>(
+            `SELECT id, full_name, email, role, blocked, created_at FROM users ORDER BY created_at DESC`,
+          );
+          const overrides = await getStatusOverridesMap(blockedRows.map((r) => Number(r.id)));
+          return blockedRows.map((r) => ({
+            ...r,
+            status: overrides.get(Number(r.id)) ?? normalizeUserStatus(r),
+            last_login: null,
+          }));
+        } catch (innerErr: any) {
+          if (innerErr && innerErr.code === 'ER_BAD_FIELD_ERROR') {
+            const [legacyRows] = await pool.query<any[]>(
+              `SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC`,
+            );
+            const overrides = await getStatusOverridesMap(legacyRows.map((r) => Number(r.id)));
+            return legacyRows.map((r) => ({
+              ...r,
+              status: overrides.get(Number(r.id)) ?? 'active',
+              blocked: 0,
+              last_login: null,
+            }));
+          }
+          throw innerErr;
+        }
+      }
+      throw err;
+    }
+  }
+
+  async updateUserRole(userId: number, role: string): Promise<boolean> {
+    const pool = getDbPool();
+    const [result] = await pool.execute<ResultSetHeader>(
+      `UPDATE users SET role = ? WHERE id = ?`,
+      [role, userId],
+    );
+    return result.affectedRows > 0;
+  }
+
+  async updateUserStatus(userId: number, status: string): Promise<boolean> {
+    const pool = getDbPool();
+    try {
+      const [result] = await pool.execute<ResultSetHeader>(
+        `UPDATE users SET status = ? WHERE id = ?`,
+        [status, userId],
+      );
+      return result.affectedRows > 0;
+    } catch (err: any) {
+      const isBadField = err && err.code === 'ER_BAD_FIELD_ERROR';
+      const isEnumError = err && (err.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD' || err.code === 'WARN_DATA_TRUNCATED');
+
+      if (isEnumError && status === 'suspended') {
+        // For schemas that only allow active/inactive, map suspended -> inactive.
+        const [result] = await pool.execute<ResultSetHeader>(
+          `UPDATE users SET status = 'inactive' WHERE id = ?`,
+          [userId],
+        );
+        return result.affectedRows > 0;
+      }
+
+      if (isBadField || isEnumError) {
+        try {
+          const blocked = status === 'active' ? 0 : 1;
+          const [legacyResult] = await pool.execute<ResultSetHeader>(
+            `UPDATE users SET blocked = ? WHERE id = ?`,
+            [blocked, userId],
+          );
+          return legacyResult.affectedRows > 0;
+        } catch (innerErr: any) {
+          if (innerErr && innerErr.code === 'ER_BAD_FIELD_ERROR') {
+            await upsertUserStatusOverride(userId, status);
+            return true;
+          }
+          throw innerErr;
+        }
+      }
+      throw err;
+    }
+  }
+
+  async updateUserBlocked(userId: number, blocked: boolean): Promise<boolean> {
+    const pool = getDbPool();
+    try {
+      const [result] = await pool.execute<ResultSetHeader>(
+        `UPDATE users SET blocked = ? WHERE id = ?`,
+        [blocked ? 1 : 0, userId],
+      );
+      return result.affectedRows > 0;
+    } catch (err: any) {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+        return true;
+      }
+      throw err;
+    }
+  }
 }

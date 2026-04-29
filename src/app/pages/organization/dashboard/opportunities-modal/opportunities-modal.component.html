@@ -1,0 +1,88 @@
+<div class="modal-overlay" (click)="closeModal()">
+	<div class="modal-content" (click)="stopPropagation($event)">
+		<div class="modal-header">
+			<h2>Todas las Oportunidades</h2>
+			<button type="button" class="close-btn" (click)="closeModal()">×</button>
+		</div>
+
+		<div class="modal-body">
+			<div class="opportunities-list">
+				<div
+					class="opportunity-card"
+					*ngFor="let opportunity of paginatedOpportunities"
+				>
+					<div class="opportunity-header">
+						<h3>{{ opportunity.title }}</h3>
+						<span class="status" [class]="getStatusClass(opportunity)">
+							{{ getStatusText(opportunity) }}
+						</span>
+					</div>
+
+					<div class="opportunity-image" *ngIf="opportunity.image_url">
+						<img [src]="getImageUrl(opportunity.image_url)" [alt]="opportunity.title" />
+					</div>
+
+					<div class="opportunity-details">
+						<p class="category">{{ opportunity.category }}</p>
+						<p class="date">{{ formatDate(opportunity.opportunity_date) }}</p>
+						<p class="time">{{ opportunity.time_and_duration }}</p>
+						<p class="location">{{ opportunity.location }}</p>
+						<p class="spots">{{ opportunity.registered }}/{{ opportunity.total_spots }} registrados</p>
+					</div>
+
+					<div class="opportunity-description">
+						<p>{{ opportunity.about }}</p>
+					</div>
+
+					<div class="opportunity-actions">
+						<button
+							type="button"
+							class="edit-btn"
+							(click)="editOpportunity(opportunity.id, $event)"
+						>
+							Editar
+						</button>
+						
+						<!--Boton de eliminar-->
+						<button
+							type="button"
+							class="delete-btn"
+							[disabled]="isDeleting() === opportunity.id"
+							(click)="deleteOpportunity(opportunity.id, $event)"
+						>
+							{{ isDeleting() === opportunity.id ? 'Eliminando...' : 'Eliminar' }}
+						</button>
+					</div>
+				</div>
+
+				<div *ngIf="opportunities.length === 0" class="empty-state">
+					<p>No hay oportunidades disponibles</p>
+				</div>
+			</div>
+
+			<div class="pagination" *ngIf="totalPages > 1">
+				<button
+					type="button"
+					class="page-btn"
+					[disabled]="currentPage() === 1"
+					(click)="previousPage()"
+				>
+					← Anterior
+				</button>
+
+				<span class="page-info">
+					Página {{ currentPage() }} de {{ totalPages }}
+				</span>
+
+				<button
+					type="button"
+					class="page-btn"
+					[disabled]="currentPage() === totalPages"
+					(click)="nextPage()"
+				>
+					Siguiente →
+				</button>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,85 @@
+<main class="volunteers-page">
+  <div class="volunteers-container">
+    <header class="page-header">
+      <div>
+        <h1>Voluntarios</h1>
+        <p>Gestiona y rastrea tu comunidad de voluntarios</p>
+      </div>
+    </header>
+
+    <section class="stats-grid">
+      <article class="stat-card" *ngFor="let stat of stats()" [attr.data-tone]="stat.tone">
+        <strong>{{ stat.value }}</strong>
+        <span>{{ stat.label }}</span>
+        <small *ngIf="stat.hint">{{ stat.hint }}</small>
+      </article>
+    </section>
+
+    <section class="toolbar">
+      <input 
+        type="text" 
+        placeholder="Buscar voluntarios por nombre o correo..." 
+        #searchInput
+        (input)="onSearchChange(searchInput.value)"
+      />
+    </section>
+
+    <section class="table-card">
+      <h2>Todos los Voluntarios ({{ filteredVolunteers().length }})</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Voluntario</th>
+              <th>Estado</th>
+              <th>Horas</th>
+              <th>Oportunidades</th>
+              <th>Calificación</th>
+              <th>Asistencia</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let volunteer of volunteers()">
+              <td>
+                <strong>{{ volunteer.name }}</strong>
+                <span>{{ volunteer.email }}</span>
+                <small>Se unió {{ volunteer.joined }}</small>
+              </td>
+              <td><span class="status-pill" [class]="volunteer.status">{{ formatStatus(volunteer.status) }}</span></td>
+              <td>{{ volunteer.hours }} <small>horas</small></td>
+              <td>{{ volunteer.opportunities }} <small>completadas</small></td>
+              <td>{{ volunteer.rating }}</td>
+              <td>{{ volunteer.attendance }}%</td>
+              <td>
+                <button type="button" class="view-btn" (click)="openModal(volunteer)">Ver</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" *ngIf="showModal()">
+      <div class="modal" role="dialog" aria-modal="true">
+        <header class="modal-header">
+          <h3>{{ selectedVolunteer()?.name }}</h3>
+          <button type="button" class="close" (click)="closeModal()">✕</button>
+        </header>
+        <main class="modal-body">
+          <p><strong>Correo:</strong> {{ selectedVolunteer()?.email }}</p>
+          <p><strong>Estado:</strong> {{ formatStatus(selectedVolunteer()?.status ?? 'new') }}</p>
+          <p><strong>Horas:</strong> {{ selectedVolunteer()?.hours }} horas</p>
+          <p><strong>Oportunidades completadas:</strong> {{ selectedVolunteer()?.opportunities }}</p>
+        </main>
+        <footer class="modal-footer">
+          <button type="button" class="btn primary" (click)="onAccept(selectedVolunteer()!)">Aceptar</button>
+          <button type="button" class="btn" (click)="onRate(selectedVolunteer()!)">Calificar</button>
+          <button type="button" class="btn" (click)="onMarkComplete(selectedVolunteer()!)">Marcar como completado</button>
+          <button type="button" class="btn secondary" (click)="closeModal()">Cerrar</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</main>

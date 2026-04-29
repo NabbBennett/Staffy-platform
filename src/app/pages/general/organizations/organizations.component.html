@@ -1,0 +1,147 @@
+<section class="organizations-page">
+	<header class="organizations-header">
+		<h1>Perfiles de empresas</h1>
+		<p>Aquí se muestran los perfiles de las empresas registradas con rol <strong>empresa</strong>.</p>
+	</header>
+
+	<section class="filters-panel">
+		<div class="search-field">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="11" cy="11" r="7"></circle>
+				<path d="M20 20L16.65 16.65"></path>
+			</svg>
+			<input
+				type="text"
+				placeholder="Buscar organizaciones..."
+				[ngModel]="searchQuery()"
+				(ngModelChange)="searchQuery.set($event)"
+			/>
+		</div>
+
+		<div class="filter-actions">
+			<select
+				[ngModel]="selectedCategory()"
+				(ngModelChange)="onCategoryChange($event)"
+				aria-label="Filtrar empresas por categoría"
+			>
+				<option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+			</select>
+		</div>
+	</section>
+
+	<section class="stats-grid">
+		<article class="stat-card">
+			<div class="stat-icon purple">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<rect x="5" y="4" width="14" height="16" rx="2"></rect>
+					<path d="M9 8H15"></path>
+					<path d="M9 12H15"></path>
+				</svg>
+			</div>
+			<div>
+				<strong>{{ organizations().length }}</strong>
+<span>Empresas</span>
+			</div>
+		</article>
+
+		<article class="stat-card">
+			<div class="stat-icon blue">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<rect x="4" y="6" width="16" height="14" rx="2"></rect>
+					<path d="M8 3V9"></path>
+					<path d="M16 3V9"></path>
+				</svg>
+			</div>
+			<div>
+				<strong>{{ totalOpportunities() }}</strong>
+				<span>Oportunidades</span>
+			</div>
+		</article>
+
+		<article class="stat-card">
+			<div class="stat-icon green">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<circle cx="9" cy="8" r="3"></circle>
+					<circle cx="17" cy="8" r="2"></circle>
+					<path d="M4 18C4 15.2386 6.23858 13 9 13H12C14.7614 13 17 15.2386 17 18"></path>
+				</svg>
+			</div>
+			<div>
+				<strong>{{ totalVolunteers() }}</strong>
+				<span>Voluntarios Activos</span>
+			</div>
+		</article>
+
+		<article class="stat-card">
+			<div class="stat-icon orange">
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 3L14.4 8.2L20 8.9L16 12.8L17 18.4L12 15.7L7 18.4L8 12.8L4 8.9L9.6 8.2L12 3Z"></path>
+				</svg>
+			</div>
+			<div>
+				<strong>{{ organizations().length }}</strong>
+				<span>Verificadas</span>
+			</div>
+		</article>
+	</section>
+
+	<div *ngIf="loading()" class="loading">
+		<p>Cargando organizaciones...</p>
+	</div>
+
+	<div *ngIf="error()" class="error-message">
+		<p>{{ error() }}</p>
+		<button type="button" (click)="loadOrganizations()">Reintentar</button>
+	</div>
+
+	<section class="organizations-grid" *ngIf="!loading() && !error()">
+		<article class="organization-card" *ngFor="let organization of filteredOrganizations()">
+			<header class="card-top">
+				<div class="organization-id">{{ organization.initials }}</div>
+				<div class="organization-headline">
+					<h2>{{ organization.name }}</h2>
+					<div class="tags">
+						<span class="tag category">{{ organization.category }}</span>
+						<span *ngIf="organization.verified" class="tag verified">Verificado</span>
+					</div>
+				</div>
+			</header>
+
+			<p class="description">{{ organization.description }}</p>
+
+			<ul class="meta-list">
+				<li>
+					<span class="meta-label">Ubicación</span>
+					<span>{{ organization.location }}</span>
+				</li>
+				<li>
+					<span class="meta-label">Oportunidades abiertas</span>
+					<span>{{ organization.opportunities }}</span>
+				</li>
+				<li>
+					<span class="meta-label">Voluntarios</span>
+					<span>{{ organization.volunteers }}</span>
+				</li>
+				<li>
+					<span class="meta-label">Calificación</span>
+					<span>{{ organization.rating }} / 5</span>
+				</li>
+			</ul>
+
+			<div class="card-actions">
+				<button class="view-profile" type="button" (click)="openProfileModal(organization)">Ver Perfil</button>
+			</div>
+		</article>
+	</section>
+
+	<section *ngIf="filteredOrganizations().length === 0 && !loading()" class="empty-state">
+		<h3>No se encontraron organizaciones</h3>
+		<p>Intenta cambiar los filtros de búsqueda o categoría.</p>
+	</section>
+
+	<app-organization-profile-modal
+		*ngIf="selectedOrganization() as selected"
+		[organization]="selected"
+		(close)="closeProfileModal()"
+	></app-organization-profile-modal>
+</section>

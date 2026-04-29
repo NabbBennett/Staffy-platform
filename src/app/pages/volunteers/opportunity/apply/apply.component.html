@@ -1,0 +1,94 @@
+<main class="apply-page">
+	<div class="apply-container">
+		<a class="back-link" [routerLink]="['/opportunities', opportunityId]">← Volver a la oportunidad</a>
+
+		<section class="apply-card">
+			<h1>Postularme a esta Oportunidad</h1>
+			<p class="opportunity-name">{{ opportunityTitle() }}</p>
+
+			<div *ngIf="submitSuccess()" class="success-message">
+				<p>✓ Aplicación enviada correctamente. Redirigiendo...</p>
+			</div>
+
+			<div *ngIf="submitError()" class="error-message">
+				<p>{{ submitError() }}</p>
+			</div>
+
+			<form (ngSubmit)="submitApplication(applyForm)" #applyForm="ngForm" novalidate>
+				<div class="account-info">
+					<p>Aplicando como <strong>{{ fullName }}</strong></p>
+					<p>Correo: <strong>{{ email }}</strong></p>
+				</div>
+
+				<label for="phone">Número de Teléfono *</label>
+				<input
+					id="phone"
+					name="phone"
+					type="text"
+					[(ngModel)]="phone"
+					required
+					maxlength="10"
+					pattern="^\d{10}$"
+					inputmode="numeric"
+					(input)="onPhoneInput($event)"
+					#phoneModel="ngModel"
+				/>
+				<p class="error-message" *ngIf="(phoneModel.invalid && phoneModel.touched) || (submitAttempted && phoneModel.invalid)">
+					El teléfono debe tener exactamente 10 dígitos.
+				</p>
+
+				<label for="experience">Experiencia Relevante</label>
+				<textarea
+					id="experience"
+					name="experience"
+					rows="4"
+					[(ngModel)]="relevantExperience"
+					minlength="20"
+					placeholder="Cuéntanos sobre tu experiencia de voluntariado o laboral..."
+					#experienceModel="ngModel"
+				></textarea>
+				<p class="error-message" *ngIf="(experienceModel.invalid && experienceModel.touched) || (submitAttempted && experienceModel.invalid)">
+					Por favor proporciona al menos 20 caracteres sobre tu experiencia.
+				</p>
+
+				<label for="motivation">¿Por qué quieres ser voluntario en esta oportunidad? *</label>
+				<textarea
+					id="motivation"
+					name="motivation"
+					rows="4"
+					[(ngModel)]="motivation"
+					placeholder="Comparte tu motivación y qué esperas contribuir..."
+					required
+					minlength="20"
+					#motivationModel="ngModel"
+				></textarea>
+				<p class="error-message" *ngIf="(motivationModel.invalid && motivationModel.touched) || (submitAttempted && motivationModel.invalid)">
+					Por favor proporciona al menos 20 caracteres para tu motivación.
+				</p>
+
+				<label class="check-row">
+					<input type="checkbox" name="confirmAvailability" [(ngModel)]="confirmAvailability" required #availabilityModel="ngModel" />
+					<span>Confirmo mi disponibilidad para la fecha y hora programada</span>
+				</label>
+				<p class="error-message" *ngIf="(availabilityModel.invalid && availabilityModel.touched) || (submitAttempted && availabilityModel.invalid)">
+					Debes confirmar tu disponibilidad.
+				</p>
+
+				<label class="check-row">
+					<input type="checkbox" name="acceptTerms" [(ngModel)]="acceptTerms" required #termsModel="ngModel" />
+					<span>Acepto los términos y condiciones y entiendo que puede requerirse una verificación de antecedentes *</span>
+				</label>
+				<p class="error-message" *ngIf="(termsModel.invalid && termsModel.touched) || (submitAttempted && termsModel.invalid)">
+					Debes aceptar los términos y condiciones.
+				</p>
+
+				<div class="form-actions">
+					<button type="button" class="btn-cancel" (click)="cancel()" [disabled]="submitting()">Cancelar</button>
+					<button type="submit" class="btn-submit" [disabled]="applyForm.invalid || submitting()">
+						{{ submitting() ? 'Enviando...' : 'Enviar Aplicación' }}
+					</button>
+				</div>
+			</form>
+		</section>
+	</div>
+</main>

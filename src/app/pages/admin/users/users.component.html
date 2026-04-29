@@ -1,0 +1,194 @@
+<section class="admin-users-page">
+	<header class="admin-header">
+		<h1>Gestión de Usuarios</h1>
+		<p>Administra y monitorea todos los usuarios registrados en la plataforma.</p>
+	</header>
+
+	<section class="stats-overview">
+		<div class="stat-item blue">
+			<span class="stat-count">{{ totalUsers() }}</span>
+			<span class="stat-label">Usuarios</span>
+		</div>
+		<div class="stat-item green">
+			<span class="stat-count">{{ filteredUsers().filter(u => u.status === 'active').length }}</span>
+			<span class="stat-label">Activos</span>
+		</div>
+		<div class="stat-item yellow">
+			<span class="stat-count">{{ filteredUsers().filter(u => u.status === 'inactive').length }}</span>
+			<span class="stat-label">Inactivos</span>
+		</div>
+		<div class="stat-item red">
+			<span class="stat-count">{{ filteredUsers().filter(u => u.status === 'suspended').length }}</span>
+			<span class="stat-label">Suspendidos</span>
+		</div>
+	</section>
+
+	<div class="search-and-filters">
+		<div class="search-field">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="11" cy="11" r="7"></circle>
+				<path d="M20 20L16.65 16.65"></path>
+			</svg>
+			<input
+				type="text"
+				placeholder="Buscar por nombre o correo..."
+				[ngModel]="searchQuery()"
+				(ngModelChange)="searchQuery.set($event)"
+				(keyup.enter)="onSearch()"
+			/>
+			<button type="button" (click)="onSearch()" class="search-btn">Buscar</button>
+		</div>
+
+		<div class="filter-options">
+			<select
+				aria-label="Filtrar por estado"
+				[ngModel]="selectedStatus()"
+				(ngModelChange)="selectedStatus.set($event); onStatusChange()"
+			>
+				<option value="all">Todos los estados</option>
+				<option value="active">Activos</option>
+				<option value="inactive">Inactivos</option>
+				<option value="suspended">Suspendidos</option>
+			</select>
+		</div>
+	</div>
+
+	<div *ngIf="loading()" class="loading">
+		<p>Cargando usuarios...</p>
+	</div>
+
+	<div *ngIf="error()" class="error-message">
+		<p>{{ error() }}</p>
+		<button type="button" (click)="loadUsers()">Reintentar</button>
+	</div>
+
+	<div *ngIf="!loading() && !error()" class="users-table">
+		<table>
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Nombre Completo</th>
+					<th>Correo</th>
+					<th>Rol</th>
+					<th>Estado</th>
+					<th>Último acceso</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let user of filteredUsers()" class="user-row">
+					<td class="id-cell">{{ user.id }}</td>
+					<td class="name-cell">{{ user.full_name }}</td>
+					<td class="email-cell">{{ user.email }}</td>
+					<td class="role-cell">
+						<span class="role-badge" [class]="user.role.toLowerCase()">
+							{{ user.role === 'admin' ? 'Administrador' : user.role === 'empresa' ? 'Organización' : 'Voluntario' }}
+						</span>
+					</td>
+					<td class="status-cell">
+						<span [class]="getStatusBadgeClass(user.status)">
+							{{ user.status === 'active' ? 'Activo' : user.status === 'inactive' ? 'Inactivo' : 'Suspendido' }}
+						</span>
+					</td>
+					<td class="last-login-cell">
+						{{ user.last_login ? (user.last_login | date: 'short') : 'Nunca' }}
+					</td>
+					<td class="actions-cell">
+						<button type="button" class="btn-primary" (click)="viewUserDetails(user)">Ver</button>
+						<button type="button" class="btn-icon" aria-label="Eliminar usuario" (click)="deleteUser(user)"><i class="fa-solid fa-trash"></i></button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<section *ngIf="filteredUsers().length === 0" class="empty-state">
+			<p>No se encontraron usuarios.</p>
+		</section>
+	</div>
+
+	<section *ngIf="totalPages() > 1 && !loading()" class="pagination">
+		<button
+			type="button"
+			[disabled]="currentPage() === 1"
+			(click)="goToPage(currentPage() - 1)"
+			aria-label="Página anterior"
+		>
+			← Anterior
+		</button>
+
+		<div class="page-numbers">
+			<button
+				*ngFor="let page of pageNumbers()"
+				type="button"
+				[class.active]="currentPage() === page"
+				(click)="goToPage(page)"
+				[attr.aria-label]="'Ir a página ' + page"
+			>
+				{{ page }}
+			</button>
+		</div>
+
+		<button
+			type="button"
+			[disabled]="currentPage() === totalPages()"
+			(click)="goToPage(currentPage() + 1)"
+			aria-label="Página siguiente"
+		>
+			Siguiente →
+		</button>
+	</section>
+
+	<!-- Modal de Detalles del Usuario -->
+	<div *ngIf="showUserDetails() && selectedUser() as user" class="modal-overlay" (click)="closeUserDetails()">
+		<div class="modal-content" (click)="$event.stopPropagation()">
+			<header class="modal-header">
+				<h2>Detalles del Usuario</h2>
+				<button type="button" class="close-btn" (click)="closeUserDetails()"><i class="fa-solid fa-xmark"></i></button>
+			</header>
+
+			<div class="modal-body">
+				<div class="detail-row">
+					<label>ID:</label>
+					<span>{{ user.id }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Nombre:</label>
+					<span>{{ user.full_name }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Correo:</label>
+					<span>{{ user.email }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Rol:</label>
+					<select [(ngModel)]="user.role" (change)="changeUserRole(user, user.role)">
+						<option value="voluntario">Voluntario</option>
+						<option value="empresa">Organización</option>
+						<option value="admin">Administrador</option>
+					</select>
+				</div>
+				<div class="detail-row">
+					<label>Estado:</label>
+					<select [(ngModel)]="user.status" (change)="changeUserStatus(user, user.status)">
+						<option value="active">Activo</option>
+						<option value="inactive">Inactivo</option>
+						<option value="suspended">Suspendido</option>
+					</select>
+				</div>
+				<div class="detail-row">
+					<label>Miembro desde:</label>
+					<span>{{ user.created_at | date: 'long' }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Último acceso:</label>
+					<span>{{ user.last_login ? (user.last_login | date: 'long') : 'Nunca' }}</span>
+				</div>
+			</div>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn-secondary" (click)="closeUserDetails()">Cerrar</button>
+				<button type="button" class="btn-danger" (click)="deleteUser(user)">Eliminar Usuario</button>
+			</footer>
+		</div>
+	</div>
+</section>

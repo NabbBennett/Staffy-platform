@@ -5,6 +5,32 @@ import { SignInPayload, SignUpPayload, UserRole } from '../users/user.model';
 
 const authRouter = Router();
 
+// GET /api/auth/me - returns current user info when client provides x-staffy-user-id header
+authRouter.get('/me', async (request, response) => {
+  try {
+    const idHeader = request.header('x-staffy-user-id');
+    if (!idHeader) {
+      return response.status(400).json({ message: 'User id header missing' });
+    }
+
+    const userId = parseInt(idHeader, 10);
+    if (Number.isNaN(userId)) {
+      return response.status(400).json({ message: 'Invalid user id' });
+    }
+
+    // Lazy import to avoid circular dependency issues
+    const { findUserById } = await import('../users/user.service');
+    const user = await findUserById(userId);
+
+    if (!user) return response.status(404).json({ message: 'Usuario no encontrado' });
+
+    return response.json({ id: user.id, fullName: user.fullName, email: user.email, role: user.role });
+  } catch (err) {
+    console.error('Error in /api/auth/me:', err);
+    return response.status(500).json({ message: 'Error interno' });
+  }
+});
+
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);

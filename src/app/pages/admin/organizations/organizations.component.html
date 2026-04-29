@@ -1,0 +1,222 @@
+<section class="admin-organizations-page">
+	<header class="admin-header">
+		<h1>Gestión de Organizaciones</h1>
+		<p>Administra y verifica todas las organizaciones registradas.</p>
+	</header>
+
+	<section class="stats-overview">
+		<div class="stat-item purple">
+			<span class="stat-count">{{ totalOrganizations() }}</span>
+			<span class="stat-label">Organizaciones</span>
+		</div>
+		<div class="stat-item green">
+			<span class="stat-count">{{ verifiedCount() }}</span>
+			<span class="stat-label">Verificadas</span>
+		</div>
+		<div class="stat-item yellow">
+			<span class="stat-count">{{ pendingCount() }}</span>
+			<span class="stat-label">En revisión</span>
+		</div>
+		<div class="stat-item blue">
+			<span class="stat-count">{{ activeCount() }}</span>
+			<span class="stat-label">Activas</span>
+		</div>
+	</section>
+
+	<div class="search-and-filters">
+		<div class="search-field">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="11" cy="11" r="7"></circle>
+				<path d="M20 20L16.65 16.65"></path>
+			</svg>
+			<input
+				type="text"
+				placeholder="Buscar por nombre o correo..."
+				[ngModel]="searchQuery()"
+				(ngModelChange)="searchQuery.set($event)"
+				(keyup.enter)="onSearch()"
+			/>
+			<button type="button" (click)="onSearch()" class="search-btn">Buscar</button>
+		</div>
+
+		<div class="filter-options">
+			<select
+				[ngModel]="selectedStatus()"
+				(ngModelChange)="selectedStatus.set($event); onStatusChange()"
+				aria-label="Filtrar por estado"
+			>
+				<option value="all">Todos los estados</option>
+				<option value="active">Activas</option>
+				<option value="pending">En revisión</option>
+			</select>
+		</div>
+	</div>
+
+	<div *ngIf="loading()" class="loading">
+		<p>Cargando organizaciones...</p>
+	</div>
+
+	<div *ngIf="error()" class="error-message">
+		<p>{{ error() }}</p>
+		<button type="button" (click)="loadOrganizations()">Reintentar</button>
+	</div>
+
+	<div *ngIf="!loading() && !error()" class="organizations-grid">
+		<article *ngFor="let org of filteredOrganizations()" class="org-card">
+			<header class="card-header">
+				<div class="org-id">{{ org.name.substring(0, 2).toUpperCase() }}</div>
+				<div class="org-info">
+					<h2>{{ org.name }}</h2>
+					<p class="category">{{ org.category }}</p>
+				</div>
+				<div class="verified-badge" *ngIf="org.verified">✓ Verificada</div>
+			</header>
+
+			<div class="card-body">
+				<div class="info-row">
+					<span class="label">Correo:</span>
+					<span class="value">{{ org.email }}</span>
+				</div>
+				<div class="info-row">
+					<span class="label">Teléfono:</span>
+					<span class="value">{{ org.phone }}</span>
+				</div>
+				<div class="info-row">
+					<span class="label">Oportunidades:</span>
+					<span class="value">{{ org.opportunities }}</span>
+				</div>
+				<div class="info-row">
+					<span class="label">Voluntarios:</span>
+					<span class="value">{{ org.volunteers }}</span>
+				</div>
+				<div class="info-row">
+					<span class="label">Calificación:</span>
+					<span class="value">{{ org.rating }}/5 <i class="fa-solid fa-star"></i></span>
+				</div>
+				<div class="info-row">
+					<span class="label">Estado:</span>
+					<span [class]="getStatusBadgeClass(org.status)">
+						{{ org.status === 'active' ? 'Activa' : org.status === 'inactive' ? 'Inactiva' : 'En revisión' }}
+					</span>
+				</div>
+			</div>
+
+			<footer class="card-footer">
+				<button type="button" class="btn-primary" (click)="viewOrgDetails(org)">Detalles</button>
+				<button
+					*ngIf="!org.verified"
+					type="button"
+					class="btn-success"
+					(click)="verifyOrganization(org)"
+				>
+					Verificar
+				</button>
+				<button type="button" class="btn-icon" aria-label="Eliminar" (click)="deleteOrganization(org)"><i class="fa-solid fa-trash"></i></button>
+			</footer>
+		</article>
+	</div>
+
+	<section *ngIf="filteredOrganizations().length === 0 && !loading()" class="empty-state">
+		<p>No se encontraron organizaciones.</p>
+	</section>
+
+	<section *ngIf="totalPages() > 1 && !loading()" class="pagination">
+		<button
+			type="button"
+			[disabled]="currentPage() === 1"
+			(click)="goToPage(currentPage() - 1)"
+			aria-label="Página anterior"
+		>
+			← Anterior
+		</button>
+
+		<div class="page-numbers">
+			<button
+				*ngFor="let page of pageNumbers()"
+				type="button"
+				[class.active]="currentPage() === page"
+				(click)="goToPage(page)"
+				[attr.aria-label]="'Ir a página ' + page"
+			>
+				{{ page }}
+			</button>
+		</div>
+
+		<button
+			type="button"
+			[disabled]="currentPage() === totalPages()"
+			(click)="goToPage(currentPage() + 1)"
+			aria-label="Página siguiente"
+		>
+			Siguiente →
+		</button>
+	</section>
+
+	<!-- Modal de Detalles de la Organización -->
+	<div *ngIf="showOrgDetails() && selectedOrg() as org" class="modal-overlay" (click)="closeOrgDetails()">
+		<div class="modal-content" (click)="$event.stopPropagation()">
+			<header class="modal-header">
+				<h2>Detalles de la Organización</h2>
+				<button type="button" class="close-btn" (click)="closeOrgDetails()"><i class="fa-solid fa-xmark"></i></button>
+			</header>
+
+			<div class="modal-body">
+				<div class="detail-row">
+					<label>Nombre:</label>
+					<span>{{ org.name }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Categoría:</label>
+					<span>{{ org.category }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Correo:</label>
+					<span>{{ org.email }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Teléfono:</label>
+					<span>{{ org.phone }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Oportunidades Activas:</label>
+					<span>{{ org.opportunities }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Voluntarios:</label>
+					<span>{{ org.volunteers }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Calificación:</label>
+					<span>{{ org.rating }}/5 <i class="fa-solid fa-star"></i></span>
+				</div>
+				<div class="detail-row">
+					<label>Verificada:</label>
+					<span>{{ org.verified ? 'Sí ✓' : 'No' }}</span>
+				</div>
+				<div class="detail-row">
+					<label>Estado:</label>
+					<span [class]="getStatusBadgeClass(org.status)">
+						{{ org.status === 'active' ? 'Activa' : 'En revisión' }}
+					</span>
+				</div>
+				<div class="detail-row">
+					<label>Miembro desde:</label>
+					<span>{{ org.created_at | date: 'long' }}</span>
+				</div>
+			</div>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn-secondary" (click)="closeOrgDetails()">Cerrar</button>
+				<button
+					*ngIf="!selectedOrg()?.verified"
+					type="button"
+					class="btn-success"
+					(click)="verifyOrganization(selectedOrg()!)"
+				>
+					Verificar
+				</button>
+				<button type="button" class="btn-danger" (click)="deleteOrganization(selectedOrg()!)">Eliminar</button>
+			</footer>
+		</div>
+	</div>
+</section>

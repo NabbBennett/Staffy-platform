@@ -1,0 +1,94 @@
+<main class="opportunity-detail-page">
+	<div *ngIf="loading()" class="loading">
+		<p>Cargando oportunidad...</p>
+	</div>
+
+	<div *ngIf="error()" class="error-message">
+		<p>{{ error() }}</p>
+	</div>
+
+	<div *ngIf="opportunity() as item">
+		<section class="hero-image">
+			<img [src]="getImageUrl(item.image)" [alt]="item.title" />
+		</section>
+
+		<section class="detail-container">
+			<section class="content-column">
+				<h1>{{ item.title }}</h1>
+
+				<div class="organization-row">
+					<ng-container *ngIf="item.organization_logo; else organizationInitials">
+						<img class="organization-logo" [src]="getImageUrl(item.organization_logo)" [alt]="item.organization" />
+					</ng-container>
+					<ng-template #organizationInitials>
+						<div class="organization-avatar">{{ (item.organization || 'Org').substring(0, 3).toUpperCase() }}</div>
+					</ng-template>
+					<div>
+						<strong>{{ item.organization }}</strong>
+					</div>
+				</div>
+
+				<div class="tags-row">
+					<span class="tag" *ngFor="let tag of item.tags">{{ tag }}</span>
+				</div>
+
+				<article class="info-card">
+					<h3>Sobre esta Oportunidad</h3>
+					<p>{{ item.about }}</p>
+				</article>
+
+				<article class="info-card">
+					<h3>Responsabilidades</h3>
+					<ul class="check-list positive">
+						<li *ngFor="let responsibility of item.responsibilities">{{ responsibility }}</li>
+					</ul>
+				</article>
+
+				<article class="info-card">
+					<h3>Requisitos</h3>
+					<ul class="check-list warning">
+						<li *ngFor="let requirement of item.requirements">{{ requirement }}</li>
+					</ul>
+				</article>
+			</section>
+
+			<aside class="sidebar-column">
+				<article class="side-card">
+					<div class="detail-row">
+						<h4>Fecha</h4>
+						<p>{{ item.date }}</p>
+					</div>
+					<div class="detail-row">
+						<h4>Horario y Duración</h4>
+						<p>{{ item.timeAndDuration }}</p>
+					</div>
+					<div class="detail-row">
+						<h4>Ubicación</h4>
+						<p>{{ item.location }}</p>
+					</div>
+					<div class="detail-row">
+						<h4>Disponibilidad</h4>
+						<p>{{ item.registered }} de {{ item.totalSpots }} espacios ocupados</p>
+					</div>
+
+					<div class="progress-wrap">
+						<div class="progress-labels">
+							<span>{{ item.registered }} registrados</span>
+							<span>{{ item.totalSpots }} total</span>
+						</div>
+						<div class="progress-bar">
+							<div class="progress-fill" [style.width]="progressWidth()"></div>
+						</div>
+					</div>
+
+					<ng-container *ngIf="!isFull(); else fullOpportunityState">
+						<button class="primary-btn" type="button" [routerLink]="['/opportunities', item.id, 'apply']">Postularme ahora</button>
+					</ng-container>
+					<ng-template #fullOpportunityState>
+						<button class="primary-btn" type="button" disabled>Lleno</button>
+					</ng-template>
+				</article>
+			</aside>
+		</section>
+	</div>
+</main>

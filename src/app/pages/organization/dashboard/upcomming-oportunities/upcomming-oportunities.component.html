@@ -1,0 +1,12 @@
+<div class="upcoming-list">
+	<div class="opportunity-item" *ngFor="let opportunity of visibleOpportunities">
+		<div>
+			<h3>{{ opportunity.title }}</h3>
+			<p>{{ opportunity.date }}</p>
+		</div>
+		<div class="opportunity-meta">
+			<span class="status" [class.full]="opportunity.status === 'Full'">{{ opportunity.status }}</span>
+			<small>{{ opportunity.progress }}</small>
+		</div>
+	</div>
+</div>

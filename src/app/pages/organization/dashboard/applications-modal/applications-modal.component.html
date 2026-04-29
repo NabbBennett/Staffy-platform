@@ -1,0 +1,36 @@
+<div class="modal-overlay" (click)="closeModal()"></div>
+
+<section class="applications-modal" (click)="$event.stopPropagation()">
+	<header class="modal-header">
+		<div>
+			<h2>Todas las Aplicaciones</h2>
+			<p>Revisa y gestiona todas las aplicaciones desde este panel.</p>
+		</div>
+		<button type="button" class="modal-close" (click)="closeModal()" aria-label="Cerrar modal de aplicaciones">×</button>
+	</header>
+
+	<div class="modal-list">
+		<div class="application-item" *ngFor="let application of paginatedApplications()">
+			<div class="avatar">{{ application.name.charAt(0) }}</div>
+			<div class="application-content">
+				<h3>{{ application.name }}</h3>
+				<p>{{ application.opportunity }}</p>
+				<small>{{ application.time }}</small>
+			<p class="application-email">{{ application.email }}</p>
+		</div>
+		<div class="application-actions">
+			<span class="application-status" [ngClass]="getStatusClass(application.status)">{{ formatStatus(application.status) }}</span>
+			<button type="button" class="btn-accept" *ngIf="application.status === 'submitted' || application.status === 'reviewed'" (click)="emitAction(application.id, 'accepted')">Aceptar</button>
+			<button type="button" class="btn-reject" *ngIf="application.status === 'submitted' || application.status === 'reviewed'" (click)="emitAction(application.id, 'rejected')">Rechazar</button>
+		</div>
+		</div>
+	</div>
+
+	<footer class="modal-footer">
+		<div class="page-info">Página {{ currentPage() }} de {{ totalPages() }}</div>
+		<div class="pagination-controls">
+			<button type="button" class="pagination-btn" (click)="previousPage()" [disabled]="currentPage() === 1">Anterior</button>
+			<button type="button" class="pagination-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">Siguiente</button>
+		</div>
+	</footer>
+</section>

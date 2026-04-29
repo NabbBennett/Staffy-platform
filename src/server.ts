@@ -7,7 +7,10 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 import { authRouter } from './server/auth/auth.routes';
+import { opportunityRouter } from './server/opportunities/opportunity.routes';
+import { organizationRouter } from './server/organizations/organization.routes';
 import { userRouter } from './server/users/user.routes';
+import adminRouter from './server/admin/admin.routes';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -17,6 +20,14 @@ const angularApp = new AngularNodeAppEngine();
 app.use(express.json({ limit: '40mb' }));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
+app.use('/api/organizations', organizationRouter);
+app.use('/api/opportunities', opportunityRouter);
+app.use('/api/admin', adminRouter);
+
+/**
+ * Serve uploaded files from /public
+ */
+app.use(express.static(join(import.meta.dirname, '../public')));
 
 /**
  * Example Express Rest API endpoints can be defined here.

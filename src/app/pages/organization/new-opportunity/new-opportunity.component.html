@@ -1,0 +1,264 @@
+<main class="new-opportunity-page">
+
+	<section class="page-shell">
+		<div class="page-hero">
+			<a routerLink="/organization/dashboard" class="back-link">← Volver al panel</a>
+						<h1>{{ isEditing() ? 'Editar oportunidad' : 'Crear nueva oportunidad' }}</h1>
+						<p>{{ isEditing() ? 'Actualiza la oportunidad con los cambios que necesites.' : 'Publica una oportunidad de voluntariado con un formato limpio, claro y fácil de completar.' }}</p>
+		</div>
+
+		<div *ngIf="formError()" class="message error">{{ formError() }}</div>
+		<div *ngIf="formSuccess()" class="message success">{{ formSuccess() }}</div>
+
+		<section *ngIf="!isPublished(); else successState" class="wizard-layout">
+			<aside class="sidebar-card">
+				<h2>Progreso</h2>
+				<div class="step-list">
+					<button
+						type="button"
+						*ngFor="let step of steps"
+						class="step-item"
+						[class.active]="currentStep() === step.id"
+						[class.done]="currentStep() > step.id"
+						(click)="goToStep(step.id)"
+					>
+						<span class="step-icon">{{ step.id }}</span>
+						<span>
+							<strong>{{ step.title }}</strong>
+							<small>{{ step.description }}</small>
+						</span>
+						<span class="step-check" *ngIf="currentStep() > step.id">✓</span>
+					</button>
+				</div>
+			</aside>
+
+			<section class="content-card" *ngIf="currentStep() === 1">
+				<header class="section-header">
+					<div>
+						<h2>Paso 1: Información básica</h2>
+						<p>Cuentale a los voluntarios de qué va la oportunidad.</p>
+					</div>
+				</header>
+
+				<div class="card-grid single">
+					<label class="field full">
+						<span>Título de la oportunidad *</span>
+						<input type="text" [(ngModel)]="form().title" (ngModelChange)="updateField('title', $event)" placeholder="Ej.: Distribución de alimentos en el barrio" />
+					</label>
+
+					<label class="field">
+						<span>Categoría *</span>
+						<select [(ngModel)]="form().category" (ngModelChange)="updateField('category', $event)">
+							<option *ngFor="let option of categoryOptions" [value]="option.value">{{ option.label }}</option>
+						</select>
+					</label>
+
+					<label class="field full">
+						<span>Descripción *</span>
+						<textarea rows="6" [(ngModel)]="form().description" (ngModelChange)="updateField('description', $event)" placeholder="Describe qué harán los voluntarios y el impacto que tendrá la actividad."></textarea>
+					</label>
+
+					<label class="field full">
+						<span>Imagen de portada *</span>
+						<input type="file" accept="image/*" (change)="selectImage($event)" />
+						<small>La imagen se sube al servidor, no se guarda como URL externa.</small>
+					</label>
+
+					<label class="toggle-card full">
+						<input type="checkbox" [(ngModel)]="form().urgent" (ngModelChange)="updateField('urgent', $event)" />
+						<div>
+							<strong>Marcar como urgente</strong>
+							<p>Las oportunidades urgentes se resaltan para atraer más atención.</p>
+						</div>
+					</label>
+				</div>
+
+				<footer class="section-actions">
+					<span></span>
+						<button type="button" class="primary-btn" (click)="goNext()">Continuar con los detalles</button>
+				</footer>
+			</section>
+
+			<section class="content-card" *ngIf="currentStep() === 2">
+				<header class="section-header">
+					<div>
+						<h2>Paso 2: Detalles del evento</h2>
+						<p>Indica cuándo y dónde se realizará.</p>
+					</div>
+				</header>
+
+				<div class="card-grid">
+					<label class="field">
+						<span>Fecha *</span>
+						<input type="date" [(ngModel)]="form().date" (ngModelChange)="updateField('date', $event)" />
+					</label>
+
+					<label class="field">
+						<span>Hora de inicio *</span>
+						<input type="time" [(ngModel)]="form().startTime" (ngModelChange)="updateField('startTime', $event)" />
+					</label>
+
+					<label class="field full">
+						<span>Duración *</span>
+						<input type="text" [(ngModel)]="form().duration" (ngModelChange)="updateField('duration', $event)" placeholder="Ej.: 4 horas, 2 a 3 horas" />
+					</label>
+
+					<label class="field full">
+						<span>Nombre del lugar *</span>
+						<input type="text" [(ngModel)]="form().locationName" (ngModelChange)="updateField('locationName', $event)" placeholder="Ej.: Centro Comunitario del Barrio" />
+					</label>
+
+					<label class="field full">
+						<span>Dirección completa *</span>
+						<input type="text" [(ngModel)]="form().fullAddress" (ngModelChange)="updateField('fullAddress', $event)" placeholder="Ej.: Calle Principal 123, Ciudad, Estado" />
+					</label>
+
+					<label class="field full">
+						<span>Número de cupos *</span>
+						<input type="number" min="1" [(ngModel)]="form().spots" (ngModelChange)="updateField('spots', $event)" placeholder="Ej.: 10" />
+					</label>
+				</div>
+
+				<footer class="section-actions">
+					<button type="button" class="secondary-btn" (click)="goBack()">Atrás</button>
+						<button type="button" class="primary-btn" (click)="goNext()">Continuar con requisitos</button>
+				</footer>
+			</section>
+
+			<section class="content-card" *ngIf="currentStep() === 3">
+				<header class="section-header">
+					<div>
+						<h2>Paso 3: Requisitos</h2>
+						<p>Agrega responsabilidades, requisitos y habilidades sugeridas.</p>
+					</div>
+				</header>
+
+				<div class="stacked-panels">
+					<section class="panel-block">
+						<div class="panel-head">
+							<div>
+								<h3>Responsabilidades</h3>
+								<p>¿Qué harán los voluntarios?</p>
+							</div>
+							<button type="button" class="inline-add" (click)="addResponsibility()">+ Agregar</button>
+						</div>
+						<div class="add-row">
+							<input type="text" [ngModel]="newResponsibility()" (ngModelChange)="newResponsibility.set($event)" placeholder="Ej.: Clasificar y organizar donaciones" />
+						</div>
+						<div class="chips-list" *ngIf="form().responsibilities.length > 0">
+							<button type="button" class="chip" *ngFor="let item of form().responsibilities; let i = index" (click)="removeItem('responsibilities', i)">
+								{{ item }} <span aria-hidden="true">×</span>
+							</button>
+						</div>
+					</section>
+
+					<section class="panel-block">
+						<div class="panel-head">
+							<div>
+								<h3>Requisitos</h3>
+								<p>¿Qué necesita la persona voluntaria?</p>
+							</div>
+							<button type="button" class="inline-add" (click)="addRequirement()">+ Agregar</button>
+						</div>
+						<div class="add-row">
+							<input type="text" [ngModel]="newRequirement()" (ngModelChange)="newRequirement.set($event)" placeholder="Ej.: Capacidad para cargar hasta 10 kg" />
+						</div>
+						<div class="chips-list" *ngIf="form().requirements.length > 0">
+							<button type="button" class="chip" *ngFor="let item of form().requirements; let i = index" (click)="removeItem('requirements', i)">
+								{{ item }} <span aria-hidden="true">×</span>
+							</button>
+						</div>
+					</section>
+
+					<section class="panel-block">
+						<div class="panel-head">
+							<div>
+								<h3>Habilidades recomendadas</h3>
+								<p>Opcionales, pero útiles para el voluntariado.</p>
+							</div>
+							<button type="button" class="inline-add" (click)="addSkill()">+ Agregar</button>
+						</div>
+						<div class="add-row">
+							<input type="text" [ngModel]="newSkill()" (ngModelChange)="newSkill.set($event)" placeholder="Ej.: Trabajo en equipo, comunicación" />
+						</div>
+						<div class="chips-list" *ngIf="form().skills.length > 0">
+							<button type="button" class="chip" *ngFor="let item of form().skills; let i = index" (click)="removeItem('skills', i)">
+								{{ item }} <span aria-hidden="true">×</span>
+							</button>
+						</div>
+					</section>
+				</div>
+
+				<footer class="section-actions">
+					<button type="button" class="secondary-btn" (click)="goBack()">Atrás</button>
+					<button type="button" class="primary-btn" (click)="goNext()">Revisar y publicar</button>
+				</footer>
+			</section>
+
+			<section class="content-card" *ngIf="currentStep() === 4">
+				<header class="section-header">
+					<div>
+						<h2>Revisar y publicar</h2>
+						<p>Confirma que todo esté correcto antes de publicar.</p>
+					</div>
+				</header>
+
+				<div class="review-grid">
+					<article class="review-card">
+						<h3>Información básica</h3>
+						<p><strong>Título</strong><span>{{ form().title || 'Sin título' }}</span></p>
+						<p><strong>Categoría</strong><span>{{ selectedCategoryLabel() }}</span></p>
+						<p><strong>Descripción</strong><span>{{ form().description || 'Sin descripción' }}</span></p>
+					</article>
+
+					<article class="review-card">
+						<h3>Detalles del evento</h3>
+						<p><strong>Fecha</strong><span>{{ form().date || 'Sin fecha' }}</span></p>
+						<p><strong>Horario</strong><span>{{ form().startTime || '--:--' }} · {{ form().duration || 'Sin duración' }}</span></p>
+						<p><strong>Ubicación</strong><span>{{ form().locationName || 'Sin ubicación' }}</span></p>
+						<p><strong>Cupos</strong><span>{{ form().spots }} voluntarios</span></p>
+					</article>
+				</div>
+
+				<div class="cover-preview" *ngIf="previewImageUrl() as imageUrl; else emptyPreview">
+					<img [src]="imageUrl" [alt]="form().title || 'Portada de oportunidad'" />
+					<span *ngIf="form().urgent" class="urgent-pill">Urgente</span>
+				</div>
+				<ng-template #emptyPreview>
+					<div class="cover-preview placeholder">
+						<span>Sin imagen de portada</span>
+					</div>
+				</ng-template>
+
+				<div class="review-note" *ngIf="form().description">
+					<h3>Descripción final</h3>
+					<p>{{ form().description }}</p>
+				</div>
+
+				<div class="review-note" *ngIf="selectedImage()">
+					<h3>Imagen seleccionada</h3>
+					<p>{{ selectedImage()?.name }}</p>
+				</div>
+
+				<footer class="section-actions">
+					<button type="button" class="secondary-btn" (click)="goBack()">Atrás</button>
+						<button type="button" class="primary-btn" (click)="publishOpportunity()" [disabled]="isSubmitting()">
+							{{ isSubmitting() ? (isEditing() ? 'Guardando...' : 'Publicando...') : (isEditing() ? 'Guardar cambios' : 'Publicar oportunidad') }}
+					</button>
+				</footer>
+			</section>
+		</section>
+
+		<ng-template #successState>
+			<section class="success-card">
+				<div class="success-icon">✓</div>
+				<h2>¡Oportunidad publicada!</h2>
+				<p>{{ form().title || 'Tu oportunidad' }} ya está disponible para los voluntarios en Staffy.</p>
+				<div class="success-actions">
+					<button type="button" class="secondary-btn" (click)="resetForm()">Publicar otra oportunidad</button>
+					<button type="button" class="primary-btn" (click)="goToDashboard()">Ir al panel</button>
+				</div>
+			</section>
+		</ng-template>
+	</section>
+</main>

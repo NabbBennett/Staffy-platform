@@ -1,0 +1,58 @@
+:host {
+	display: block;
+}
+
+.upcoming-list {
+	display: grid;
+	gap: 12px;
+}
+
+.opportunity-item {
+	border: 1px solid #eef2f7;
+	border-radius: 12px;
+	padding: 14px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+
+.opportunity-item h3 {
+	margin: 0;
+	font-size: 0.95rem;
+	color: #111827;
+}
+
+.opportunity-item p {
+	margin: 3px 0 0;
+	color: #6b7280;
+	font-size: 0.82rem;
+}
+
+.opportunity-meta {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	white-space: nowrap;
+}
+
+.status {
+	padding: 4px 10px;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.status.full {
+	background: #fee2e2;
+	color: #dc2626;
+}
+
+@media (max-width: 760px) {
+	.opportunity-item {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

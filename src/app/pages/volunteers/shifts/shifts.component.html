@@ -1,0 +1,151 @@
+<div class="shifts-page">
+  <!-- Stats Section -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Hours This Month</span>
+        <span class="stat-value">{{ hoursThisMonth }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+            <i class="fa-solid fa-calendar-alt"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Upcoming Shifts</span>
+        <span class="stat-value">{{ upcomingConfirmations.length }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+            <i class="fa-solid fa-hourglass-end"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total Hours</span>
+        <span class="stat-value">{{ totalHours }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+            <i class="fa-solid fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Completed Shifts</span>
+        <span class="stat-value">{{ completedConfirmations.length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="shifts-container">
+    <!-- Left Column - Shifts -->
+    <section class="shifts-main">
+      <div class="section-header">
+        <h2>Mis Confirmaciones de Voluntariado</h2>
+        <a routerLink="/opportunities" class="browse-link">Explorar Más</a>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab-button"
+          [class.active]="activeTab() === 'upcoming'"
+          (click)="selectTab('upcoming')">
+          Próximas ({{ upcomingConfirmations.length }})
+        </button>
+      </div>
+
+      <!-- Confirmations List -->
+      <div class="shifts-list">
+        <div *ngIf="isLoading()" class="loading-state">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Cargando confirmaciones...</p>
+        </div>
+
+        <div *ngIf="error()" class="error-state">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+          <p>{{ error() }}</p>
+          <button (click)="loadConfirmations()" class="btn-retry">Reintentar</button>
+        </div>
+
+        <div *ngIf="!isLoading() && !error() && getCurrentConfirmations().length === 0" class="empty-state">
+          <i class="fa-solid fa-calendar-alt"></i>
+          <p>{{ activeTab() === 'upcoming' ? 'No tienes confirmaciones pendientes' : 'No tienes confirmaciones completadas' }}</p>
+          <a routerLink="/opportunities" class="btn-browse">Explorar Oportunidades</a>
+        </div>
+
+        <div *ngFor="let confirmation of getCurrentConfirmations()" class="shift-item">
+          <div class="shift-icon">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+
+          <div class="shift-info">
+            <div class="shift-header-row">
+              <div>
+                <h3>{{ confirmation.title }}</h3>
+                <p class="organization">{{ confirmation.organization_name }}</p>
+              </div>
+              <span class="status-badge" [ngClass]="getStatusClass(confirmation.status)">
+                {{ getStatusText(confirmation.status) }}
+              </span>
+            </div>
+
+            <div class="shift-details">
+              <div class="detail">
+                <i class="fa-solid fa-calendar-alt"></i>
+                {{ confirmation.opportunity_date | date:'mediumDate' }}
+              </div>
+              <div class="detail">
+                <i class="fa-solid fa-clock"></i>
+                {{ confirmation.location }}
+              </div>
+              <div class="detail" *ngIf="confirmation.completed_at">
+                <i class="fa-solid fa-check-circle"></i>
+                Completado: {{ confirmation.completed_at | date:'mediumDate' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="shift-action">
+            <button class="btn-details" [routerLink]="['/opportunities', confirmation.opportunity_id]">
+              Ver Detalles
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Recent Applications Section -->
+  <div class="recent-applications">
+    <h2>Aplicaciones recientes</h2>
+
+    <div *ngIf="recentApplications().length > 0" class="applications-grid">
+      <div class="application-card" *ngFor="let application of recentApplications()">
+        <div class="app-icon" [ngClass]="getApplicationStatusClass(application.status)">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <div class="app-content">
+          <h3>{{ application.title }}</h3>
+          <p>{{ application.organization_name }}</p>
+          <small>{{ application.created_at | date:'mediumDate' }}</small>
+          <span class="app-status" [ngClass]="getApplicationStatusClass(application.status)">
+            {{ formatApplicationStatus(application.status) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="recentApplications().length === 0" class="empty-state">
+      <i class="fa-solid fa-folder-open"></i>
+      <p>No hay aplicaciones recientes.</p>
+      <a routerLink="/opportunities" class="btn-browse">Buscar oportunidades</a>
+    </div>
+  </div>
+</div>
