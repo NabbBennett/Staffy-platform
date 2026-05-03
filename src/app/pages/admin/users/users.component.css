@@ -139,12 +139,14 @@
 	padding: 0 20px;
 	background: white;
 	border-radius: 12px;
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .users-table table {
 	width: 100%;
+	min-width: 980px;
 	border-collapse: collapse;
 }
 
@@ -432,4 +434,92 @@
 	border-radius: 6px;
 	cursor: pointer;
 	margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+	.stats-overview,
+	.search-and-filters,
+	.users-table,
+	.pagination,
+	.loading,
+	.error-message,
+	.empty-state {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+
+	.admin-header {
+		padding: 28px 16px;
+	}
+
+	.admin-header h1 {
+		font-size: 1.5rem;
+	}
+
+	.search-field {
+		min-width: 0;
+	}
+
+	.search-field input,
+	.filter-options select {
+		font-size: 0.9rem;
+	}
+
+	.users-table table {
+		min-width: 860px;
+	}
+
+	.users-table th,
+	.users-table td {
+		padding: 10px 8px;
+		font-size: 0.85rem;
+	}
+
+	.actions-cell {
+		gap: 6px;
+	}
+
+	.btn-primary {
+		padding: 6px 10px;
+	}
+}
+
+@media (max-width: 480px) {
+	.stats-overview {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.search-and-filters {
+		flex-direction: column;
+	}
+
+	.search-field {
+		width: 100%;
+	}
+
+	.filter-options select,
+	.search-field input,
+	.search-btn {
+		width: 100%;
+	}
+
+	.users-table {
+		padding: 0 8px;
+	}
+
+	.users-table table {
+		min-width: 780px;
+	}
+
+	.modal-content {
+		max-width: 100%;
+	}
+
+	.modal-footer {
+		flex-direction: column;
+	}
+
+	.modal-footer button {
+		width: 100%;
+	}
 }

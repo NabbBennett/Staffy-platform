@@ -39,7 +39,9 @@ export class SignInComponent {
           localStorage.setItem('staffy_user_name', response.fullName);
           localStorage.setItem('staffy_user_email', response.email);
 
-          const redirectUrl = localStorage.getItem('redirect_url') || '/profile';
+          const redirectUrl =
+            localStorage.getItem('redirect_url') ||
+            (response.role === 'admin' ? '/admin/reports' : '/profile');
           localStorage.removeItem('redirect_url');
           this.router.navigate([redirectUrl]);
         },

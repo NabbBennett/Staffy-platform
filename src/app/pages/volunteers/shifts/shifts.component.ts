@@ -9,7 +9,7 @@ interface VolunteerConfirmation {
   user_email: string;
   opportunity_id: number;
   organization_id: number;
-  status: 'pendiente' | 'confirmado' | 'completado' | 'cancelado';
+  status: 'pendiente' | 'confirmado' | 'accepted' | 'completado' | 'cancelado';
   confirmed_at: string | null;
   completed_at: string | null;
   hours_worked: number | null;
@@ -115,8 +115,14 @@ export class ShiftsComponent implements OnInit {
       });
   }
 
+  get acceptedApplications(): RecentApplication[] {
+    return this.recentApplications().filter(application => application.status === 'accepted');
+  }
+
   get upcomingConfirmations(): VolunteerConfirmation[] {
-    return this.confirmations().filter(c => c.status === 'pendiente' || c.status === 'confirmado');
+    return this.confirmations().filter(
+      c => c.status === 'pendiente' || c.status === 'confirmado' || c.status === 'accepted'
+    );
   }
 
   get completedConfirmations(): VolunteerConfirmation[] {
@@ -152,8 +158,9 @@ export class ShiftsComponent implements OnInit {
 
   getStatusText(status: string): string {
     switch (status) {
-      case 'pendiente': return 'Pendiente';
+      case 'submitted': return 'Pendiente';
       case 'confirmado': return 'Confirmado';
+      case 'accepted': return 'Aceptado';
       case 'completado': return 'Completado';
       case 'cancelado': return 'Cancelado';
       default: return status;
@@ -162,8 +169,9 @@ export class ShiftsComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'pendiente': return 'status-pending';
+      case 'submitted': return 'status-pending';
       case 'confirmado': return 'status-confirmed';
+      case 'accepted': return 'status-confirmed';
       case 'completado': return 'status-completed';
       case 'cancelado': return 'status-cancelled';
       default: return '';
@@ -184,7 +192,7 @@ export class ShiftsComponent implements OnInit {
     switch (status) {
       case 'submitted': return 'status-pending';
       case 'reviewed': return 'status-review';
-      case 'accepted': return 'status-accepted';
+      case 'accepted': return 'approved';
       case 'rejected': return 'status-rejected';
       default: return '';
     }

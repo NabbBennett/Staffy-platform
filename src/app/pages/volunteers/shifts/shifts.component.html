@@ -57,7 +57,7 @@
           class="tab-button"
           [class.active]="activeTab() === 'upcoming'"
           (click)="selectTab('upcoming')">
-          Próximas ({{ upcomingConfirmations.length }})
+          Confirmadas
         </button>
       </div>
 
@@ -75,9 +75,23 @@
         </div>
 
         <div *ngIf="!isLoading() && !error() && getCurrentConfirmations().length === 0" class="empty-state">
-          <i class="fa-solid fa-calendar-alt"></i>
-          <p>{{ activeTab() === 'upcoming' ? 'No tienes confirmaciones pendientes' : 'No tienes confirmaciones completadas' }}</p>
-          <a routerLink="/opportunities" class="btn-browse">Explorar Oportunidades</a>
+          <div *ngIf="activeTab() === 'upcoming' && acceptedApplications.length > 0; else noConfirmationsState" class="empty-state-applications">
+            <div class="empty-state-application" *ngFor="let application of acceptedApplications">
+              <span class="app-status" [ngClass]="getApplicationStatusClass(application.status)">
+                {{ formatApplicationStatus(application.status) }}
+              </span>
+              <div>
+                <h3>{{ application.title }}</h3>
+                <p>{{ application.organization_name }}</p>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noConfirmationsState>
+            <i class="fa-solid fa-calendar-alt"></i>
+            <p>{{ activeTab() === 'upcoming' ? 'No tienes confirmaciones pendientes' : 'No tienes confirmaciones completadas' }}</p>
+            <a routerLink="/opportunities" class="btn-browse">Explorar Oportunidades</a>
+          </ng-template>
         </div>
 
         <div *ngFor="let confirmation of getCurrentConfirmations()" class="shift-item">
